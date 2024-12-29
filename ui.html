@@ -7,7 +7,7 @@
     #preview {
         margin: 20px 0;
         display: grid;
-        grid-template-columns: repeat(8, 1fr);
+        grid-template-columns: repeat(11, 1fr);
         gap: 1px;
         background: #e5e5e5;
         padding: 4px;
@@ -88,17 +88,23 @@
         const preview = document.getElementById("preview");
         preview.innerHTML = "";
 
-        // Convert hex to binary rows, skipping padding bytes
+        // Convert hex to binary rows
         const rows = [];
-        for (let i = 2; i < hex.length - 2; i += 2) {
+        for (let i = 0; i < hex.length && rows.length < 11; i += 2) {
             const byte = hex.slice(i, i + 2);
             const binary = parseInt(byte, 16).toString(2).padStart(8, "0");
-            rows.push(binary);
+            const paddedBinary = binary.padEnd(11, "0");
+            rows.push(paddedBinary);
         }
 
-        // Create 8x12 grid
+        // Pad with empty rows if we don't have enough
+        while (rows.length < 11) {
+            rows.push("00000000000");
+        }
+
+        // Create 11x11 grid
         rows.forEach((row) => {
-            for (let x = 0; x < 8; x++) {
+            for (let x = 0; x < 11; x++) {
                 const pixel = document.createElement("div");
                 pixel.className = `pixel ${row[x] === "1" ? "filled" : ""}`;
                 preview.appendChild(pixel);
