@@ -73,11 +73,29 @@
 </div>
 
 <script>
-    document.getElementById("copy").onclick = () => {
+    document.getElementById("copy").onclick = async () => {
         const pixels = document.getElementById("pixel-output").textContent;
         if (pixels) {
-            navigator.clipboard.writeText(pixels);
-            parent.postMessage({ pluginMessage: { type: "copy-pixels" } }, "*");
+            try {
+                await navigator.clipboard.writeText(pixels);
+                parent.postMessage(
+                    { pluginMessage: { type: "copy-pixels" } },
+                    "*",
+                );
+            } catch (err) {
+                console.error("Failed to copy:", err);
+                // Fallback method for Figma plugin environment
+                const textarea = document.createElement("textarea");
+                textarea.value = pixels;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
+                parent.postMessage(
+                    { pluginMessage: { type: "copy-pixels" } },
+                    "*",
+                );
+            }
         }
     };
 
