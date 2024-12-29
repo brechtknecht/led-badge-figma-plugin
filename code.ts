@@ -1,4 +1,3 @@
-// plugin.ts
 figma.showUI(__html__, { width: 320, height: 600 });
 
 interface PluginMessage {
@@ -35,12 +34,16 @@ function getPixelState(frame: FrameNode): boolean[][] {
   );
 
   children.forEach((node) => {
-    const gridX = Math.floor(node.x / 10);
-    const gridY = Math.floor(node.y / 10);
+    // Round instead of floor to handle slight offsets
+    const gridX = Math.round(node.x / 10);
+    const gridY = Math.round(node.y / 10);
 
-    if (gridX >= 0 && gridX < 11 && gridY >= 0 && gridY < 11) {
+    // Shift the grid position left by 1 to correct offset
+    const adjustedX = Math.max(0, gridX - 1);
+
+    if (adjustedX >= 0 && adjustedX < 11 && gridY >= 0 && gridY < 11) {
       if (isNodeBlack(node)) {
-        grid[gridY][gridX] = true;
+        grid[gridY][adjustedX] = true;
       }
     }
   });
