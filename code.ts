@@ -49,18 +49,18 @@ function getPixelState(frame: FrameNode): boolean[][] {
 }
 
 function gridToHex(grid: boolean[][]): string {
-  // Add padding bytes at start and end
-  let result = "00";
+  let result = "";
 
-  // Process 10 rows (excluding padding)
-  for (let y = 0; y < 10; y++) {
+  // Process 11 rows
+  for (let y = 0; y < 11; y++) {
     let rowBinary = "";
 
     // Create 8-bit row
     for (let x = 0; x < 8; x++) {
-      // Get value from our 11x11 grid, centered in 8x10
+      // Get value from our 11x11 grid, but only use first 8 columns
+      // Add offset of 1 to center horizontally
       const gridX = x + 1;
-      rowBinary += gridX < 11 && grid[y][gridX] ? "1" : "0";
+      rowBinary += gridX < grid[0].length && grid[y][gridX] ? "1" : "0";
     }
 
     // Convert 8-bit binary to 2-character hex
