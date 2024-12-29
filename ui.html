@@ -88,21 +88,27 @@
         const preview = document.getElementById("preview");
         preview.innerHTML = "";
 
-        // Convert hex to binary rows
+        // Convert hex to binary rows - THE KEY FIX IS HERE
         const rows = [];
-        for (let i = 0; i < hex.length && rows.length < 11; i += 2) {
-            const byte = hex.slice(i, i + 2);
-            const binary = parseInt(byte, 16).toString(2).padStart(8, "0");
-            const paddedBinary = binary.padEnd(11, "0");
-            rows.push(paddedBinary);
+        for (let i = 0; i < hex.length; i += 4) {
+            const byte1 = hex.slice(i, i + 2);
+            const byte2 = hex.slice(i + 2, i + 4);
+
+            // Get 8 bits from first byte
+            let binary1 = parseInt(byte1, 16).toString(2).padStart(8, "0");
+            // Get 3 bits from second byte
+            let binary2 = parseInt(byte2, 16)
+                .toString(2)
+                .padStart(8, "0")
+                .slice(0, 3);
+
+            // IMPORTANT: We slice off the first bit to remove the offset!
+            let fullBinary = binary1.slice(1) + binary2;
+
+            rows.push(fullBinary);
         }
 
-        // Pad with empty rows if we don't have enough
-        while (rows.length < 11) {
-            rows.push("00000000000");
-        }
-
-        // Create 11x11 grid
+        // Create grid
         rows.forEach((row) => {
             for (let x = 0; x < 11; x++) {
                 const pixel = document.createElement("div");
@@ -111,7 +117,6 @@
             }
         });
 
-        // Update hex display
         document.getElementById("hex-output").textContent = hex;
     }
 
