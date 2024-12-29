@@ -1,8 +1,9 @@
+// plugin.ts
 figma.showUI(__html__, { width: 320, height: 600 });
 
 interface PluginMessage {
   type: string;
-  hex?: string;
+  pixels?: string;
   message?: string;
 }
 
@@ -34,9 +35,9 @@ function getPixelState(frame: FrameNode): boolean[][] {
   );
 
   children.forEach((node) => {
-    // Remove any division or rounding that might cause offset
     const gridX = Math.floor(node.x / 10);
     const gridY = Math.floor(node.y / 10);
+
     if (gridX >= 0 && gridX < 11 && gridY >= 0 && gridY < 11) {
       if (isNodeBlack(node)) {
         grid[gridY][gridX] = true;
@@ -46,39 +47,11 @@ function getPixelState(frame: FrameNode): boolean[][] {
 
   return grid;
 }
-function gridToHex(grid: boolean[][]): string {
-  let result = "";
 
-  // Process 11 rows
-  for (let y = 0; y < 11; y++) {
-    // Process all 11 columns using two bytes, starting from index 0 (no offset)
-    let rowBinary1 = "";
-    let rowBinary2 = "";
-
-    // First byte (8 bits), start from index 0
-    for (let x = 0; x < 8; x++) {
-      rowBinary1 += grid[y][x] ? "1" : "0";
-    }
-
-    // Second byte (3 remaining bits), continue where first byte left off
-    for (let x = 8; x < 11; x++) {
-      rowBinary2 += grid[y][x] ? "1" : "0";
-    }
-
-    // Convert both parts to hex
-    const rowHex1 = parseInt(rowBinary1, 2)
-      .toString(16)
-      .padStart(2, "0")
-      .toUpperCase();
-    const rowHex2 = parseInt(rowBinary2.padEnd(8, "0"), 2)
-      .toString(16)
-      .padStart(2, "0")
-      .toUpperCase();
-
-    result += rowHex1 + rowHex2;
-  }
-
-  return result;
+function gridToString(grid: boolean[][]): string {
+  return grid
+    .map((row) => row.map((pixel) => (pixel ? "0" : "-")).join(""))
+    .join("\n");
 }
 
 figma.on("selectionchange", () => {
@@ -87,8 +60,8 @@ figma.on("selectionchange", () => {
     const frame = selection[0] as FrameNode;
     if (Math.round(frame.width) === 110 && Math.round(frame.height) === 110) {
       const grid = getPixelState(frame);
-      const hex = gridToHex(grid);
-      figma.ui.postMessage({ type: "update-preview", hex } as PluginMessage);
+      const pixels = gridToString(grid);
+      figma.ui.postMessage({ type: "update-preview", pixels } as PluginMessage);
     } else {
       figma.ui.postMessage({
         type: "error",
@@ -99,8 +72,8 @@ figma.on("selectionchange", () => {
 });
 
 figma.ui.onmessage = (msg: PluginMessage) => {
-  if (msg.type === "copy-hex") {
-    figma.notify("Hex code copied to clipboard!");
+  if (msg.type === "copy-pixels") {
+    figma.notify("Pixel string copied to clipboard!");
   } else if (msg.type === "cancel") {
     figma.closePlugin();
   }

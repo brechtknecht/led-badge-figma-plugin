@@ -22,14 +22,15 @@
     .pixel.filled {
         background: black;
     }
-    #hex-output {
+    #pixel-output {
         font-family: "SF Mono", monospace;
         padding: 8px;
         background: #f5f5f5;
         border-radius: 2px;
         margin: 10px 0;
-        word-break: break-all;
+        white-space: pre;
         min-height: 20px;
+        overflow-x: auto;
     }
     .button-container {
         display: flex;
@@ -64,19 +65,19 @@
         bitmap.
     </p>
     <div id="preview"></div>
-    <div id="hex-output"></div>
+    <div id="pixel-output"></div>
     <div class="button-container">
-        <button id="copy">Copy Hex</button>
+        <button id="copy">Copy Pixels</button>
         <button id="cancel">Cancel</button>
     </div>
 </div>
 
 <script>
     document.getElementById("copy").onclick = () => {
-        const hex = document.getElementById("hex-output").textContent;
-        if (hex) {
-            navigator.clipboard.writeText(hex);
-            parent.postMessage({ pluginMessage: { type: "copy-hex" } }, "*");
+        const pixels = document.getElementById("pixel-output").textContent;
+        if (pixels) {
+            navigator.clipboard.writeText(pixels);
+            parent.postMessage({ pluginMessage: { type: "copy-pixels" } }, "*");
         }
     };
 
@@ -84,49 +85,28 @@
         parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
     };
 
-    function createPreview(hex) {
+    function createPreview(pixels) {
         const preview = document.getElementById("preview");
         preview.innerHTML = "";
 
-        // Convert hex to binary rows - THE KEY FIX IS HERE
-        const rows = [];
-        for (let i = 0; i < hex.length; i += 4) {
-            const byte1 = hex.slice(i, i + 2);
-            const byte2 = hex.slice(i + 2, i + 4);
-
-            // Get 8 bits from first byte
-            let binary1 = parseInt(byte1, 16).toString(2).padStart(8, "0");
-            // Get 3 bits from second byte
-            let binary2 = parseInt(byte2, 16)
-                .toString(2)
-                .padStart(8, "0")
-                .slice(0, 3);
-
-            // IMPORTANT: We slice off the first bit to remove the offset!
-            let fullBinary = binary1.slice(1) + binary2;
-
-            rows.push(fullBinary);
-        }
-
-        // Create grid
+        const rows = pixels.split("\n");
         rows.forEach((row) => {
-            for (let x = 0; x < 11; x++) {
+            for (let x = 0; x < row.length; x++) {
                 const pixel = document.createElement("div");
-                pixel.className = `pixel ${row[x] === "1" ? "filled" : ""}`;
+                pixel.className = `pixel ${row[x] === "0" ? "filled" : ""}`;
                 preview.appendChild(pixel);
             }
         });
 
-        document.getElementById("hex-output").textContent = hex;
+        document.getElementById("pixel-output").textContent = pixels;
     }
 
     window.onmessage = (event) => {
         const msg = event.data.pluginMessage;
-
         if (msg.type === "update-preview") {
-            createPreview(msg.hex);
+            createPreview(msg.pixels);
         } else if (msg.type === "error") {
-            document.getElementById("hex-output").textContent = msg.message;
+            document.getElementById("pixel-output").textContent = msg.message;
         }
     };
 </script>
