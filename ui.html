@@ -1,0 +1,121 @@
+<!-- ui.html -->
+<style>
+    body {
+        font-family: Inter, sans-serif;
+        padding: 20px;
+    }
+    #preview {
+        margin: 20px 0;
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 1px;
+        background: #e5e5e5;
+        padding: 4px;
+        border-radius: 2px;
+        width: 100%;
+    }
+    .pixel {
+        aspect-ratio: 1;
+        background: white;
+        width: 100%;
+    }
+    .pixel.filled {
+        background: black;
+    }
+    #hex-output {
+        font-family: "SF Mono", monospace;
+        padding: 8px;
+        background: #f5f5f5;
+        border-radius: 2px;
+        margin: 10px 0;
+        word-break: break-all;
+        min-height: 20px;
+    }
+    .button-container {
+        display: flex;
+        gap: 8px;
+    }
+    button {
+        flex: 1;
+        min-width: 80px;
+        background: #18a0fb;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #0d8de3;
+    }
+    button#cancel {
+        background: #f5f5f5;
+        color: #333;
+    }
+    button#cancel:hover {
+        background: #eaeaea;
+    }
+</style>
+
+<div id="container">
+    <h2>Bitmap Font Generator</h2>
+    <p>
+        Select a 110×110px frame containing black rectangles to generate the
+        bitmap.
+    </p>
+    <div id="preview"></div>
+    <div id="hex-output"></div>
+    <div class="button-container">
+        <button id="copy">Copy Hex</button>
+        <button id="cancel">Cancel</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById("copy").onclick = () => {
+        const hex = document.getElementById("hex-output").textContent;
+        if (hex) {
+            navigator.clipboard.writeText(hex);
+            parent.postMessage({ pluginMessage: { type: "copy-hex" } }, "*");
+        }
+    };
+
+    document.getElementById("cancel").onclick = () => {
+        parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
+    };
+
+    function createPreview(hex) {
+        const preview = document.getElementById("preview");
+        preview.innerHTML = "";
+
+        // Convert hex to binary rows, skipping padding bytes
+        const rows = [];
+        for (let i = 2; i < hex.length - 2; i += 2) {
+            const byte = hex.slice(i, i + 2);
+            const binary = parseInt(byte, 16).toString(2).padStart(8, "0");
+            rows.push(binary);
+        }
+
+        // Create 8x12 grid
+        rows.forEach((row) => {
+            for (let x = 0; x < 8; x++) {
+                const pixel = document.createElement("div");
+                pixel.className = `pixel ${row[x] === "1" ? "filled" : ""}`;
+                preview.appendChild(pixel);
+            }
+        });
+
+        // Update hex display
+        document.getElementById("hex-output").textContent = hex;
+    }
+
+    window.onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+
+        if (msg.type === "update-preview") {
+            createPreview(msg.hex);
+        } else if (msg.type === "error") {
+            document.getElementById("hex-output").textContent = msg.message;
+        }
+    };
+</script>
